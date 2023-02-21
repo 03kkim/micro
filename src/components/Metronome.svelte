@@ -1,8 +1,11 @@
 <script lang="ts">
   import * as Tone from "tone";
-  import circleColorStore from "../stores/circleColorStore.js"
-  import tempoStore from "../stores/tempoStore.js";
+  import { circleColorStore, currBeatStore, subdivisionsStore, tempoStore } from "../stores/stores"
 
+  let numCircles: number;
+  subdivisionsStore.subscribe(data => {
+    numCircles = data;
+  })
   enum CircleColors {
     teal,
     purple
@@ -22,36 +25,56 @@
   // let numCircles: number = 2;
 
   const kickSynth: Tone.Synth<Tone.MembraneSynth> =
-    new Tone.MembraneSynth().toDestination();
+    new Tone.MembraneSynth({envelope: {  
+      attack: 0.1,
+      decay: 0.2,
+      sustain: 0.5,
+      release: 0.5,}}).toDestination();
 
   const hatSynth: Tone.Synth<Tone.MetalSynth> =
-    new Tone.MetalSynth().toDestination();
+    new Tone.MetalSynth({envelope: {  
+      attack: 0.1,
+      decay: 0.2,
+      sustain: 0.5,
+      release: 0.1,}}).toDestination();
+
   let idx = 0;
+  currBeatStore.subscribe(data => {
+    idx = data
+  })
 
   const loop: Tone.Loop<Tone.LoopOptions> = new Tone.Loop((time) => {
     if (stopped === true) {
       idx = 0;
       stopped = false;
     }
-    idx = idx % circleColors.length;
+    idx = idx % (circleColors.length);
     if (circleColors[idx] == CircleColors.purple) {
-      kickSynth.triggerAttackRelease("C2", "32n", time);
+      kickSynth.triggerAttackRelease("C2", "64n", time);
     } else if (circleColors[idx] == CircleColors.teal) {
-      hatSynth.triggerAttackRelease("C2", "32n", time);
+      hatSynth.triggerAttackRelease("C2", "64n", time);
     }
     
 
-    console.log(idx % circleColors.length)
+    
+    currBeatStore.set(idx);
+    console.log(idx)
     idx += 1;
+    
   }, "4n").start(0);
 
   let playSynth = async () => {
-    await Tone.start();
-    Tone.Transport.bpm.value = tempo;
-    Tone.Transport.start();
+    if (tempo !== 0) {
+      await Tone.start();
+      Tone.Transport.bpm.value = tempo * numCircles;
+      Tone.Transport.start();
+      stopped = false;
+    }
+    
   };
-  let pauseSynth = () => {
+  let stopSynth = () => {
     Tone.Transport.stop();
+    currBeatStore.set(0)
     stopped = true;
   };
   // event = keyup or keydown
@@ -61,12 +84,17 @@
     var isNumCirclesInputFocused = (document.activeElement === numCirclesInputElem);
     var tempoInputElem = document.getElementById('tempoInput');
     var isTempoInputFocused = (document.activeElement === tempoInputElem);
+    // numCirclesInputElem.addEventListener("change",(ev) => {
+    //   Tone.Transport.bpm.value = tempo * numCircles;
+    //   Tone.Transport.bpm.rampTo(tempo * numCircles, 1);
+    // }
+    // )
     if (!isNumCirclesInputFocused && !isTempoInputFocused) {
       if (event.code === 'Space') {
         if (stopped == true) {
           playSynth();
         } else {
-          pauseSynth();
+          stopSynth();
         }
         console.log('Space pressed')
       }
@@ -87,5 +115,5 @@
 
 <div class="bg-[#121212]">
   <!-- <button class="text-[#EEE] z-10" on:click={playSynth}>Play Metronome</button>
-  <button class="text-[#EEE] z-10" on:click={pauseSynth}>Pause Metronome</button> -->
+  <button class="text-[#EEE] z-10" on:click={stopSynth}>Pause Metronome</button> -->
 </div>

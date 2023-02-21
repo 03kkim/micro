@@ -2,18 +2,13 @@
   import P5, {type Sketch, type p5} from "p5-svelte";
   import Metronome from "./Metronome.svelte";
 
-  import circleColorStore from "../stores/circleColorStore.js"
-  import tempoStore from "../stores/tempoStore";
-
-
+  import { circleColorStore, currBeatStore, subdivisionsStore, tempoStore } from "../stores/stores"
 
   let diameter: number = 55;
 
   let numCirclesInput;
   let numCirclesInputSize: number;
-  let numCircles: number;
-  let prevNumCircles: number = numCircles;
-
+  
   let tempoInput;
   let tempoInputSize;
 
@@ -28,6 +23,17 @@
   tempoStore.subscribe(data => {
     tempo = data;
   })
+  
+  let currBeat: number;
+  currBeatStore.subscribe((data) => {
+    currBeat = data;
+  })
+
+  let numCircles: number;
+  subdivisionsStore.subscribe(data => {
+    numCircles = data;
+  })
+  let prevNumCircles: number = numCircles;
 
   let canvas;
 
@@ -35,6 +41,10 @@
     teal,
     purple
   }
+
+  let numCirclesSlider;
+
+  let usingInput = false;
 
   const sketch: Sketch = (p5) => {
     
@@ -44,50 +54,68 @@
       canvas.position(0, 0);
       canvas.style('z-index', '-1')
       
-      numCirclesInput = p5.createInput('').attribute('placeholder', 'Beats');
+      numCirclesInput = p5.createInput('16').attribute('placeholder', 'Subdivisions');
       setNumCirclesInputStyle();
       numCirclesInput.changed(updateCircleColorsLen)
       initCircleColors();
 
-      tempoInput = p5.createInput('').attribute('placeholder', 'BPM');;
+      tempoInput = p5.createInput('30').attribute('placeholder', 'BPM');;
       setTempoInputStyle();
       tempoInput.changed(updateTempo)
+
+      numCirclesSlider = p5.createSlider(0, 32, 1);
+      setNumCirclesSliderStyle();
+
+      const setNumCirclesInput = () => {
+        numCirclesInput.value(numCirclesSlider.value())
+      }
+      numCirclesSlider.input(setNumCirclesInput)
 
       circleColorStore.set(circleColors)
       console.log(circleColors)
 
       
 
-      p5.noLoop()
+      const setNumCirclesSlider = () => {
+        numCirclesSlider.value(numCirclesInput.value())
+      }
+      numCirclesInput.input(setNumCirclesSlider)
+      // p5.noLoop()
       
     };
+    
     p5.draw = () => {
-      prevNumCircles = numCircles;
-      numCircles = Number(numCirclesInput.value());
+        prevNumCircles = numCircles;
+
+        // numCircles = Number(numCirclesInput.value());
+        var numCirclesInputElem = document.getElementById('numCirclesInput');
+        var isNumCirclesInputFocused = (document.activeElement === numCirclesInputElem);
+        numCircles = numCirclesSlider.value();
+
+        
+        if (!isNumCirclesInputFocused) {
+          // console.log("bruh")
+          numCirclesSlider.value(numCirclesInput.value());
+        }
+      
+      subdivisionsStore.set(numCircles)
       updateCircleColorsLen();
       updateTempo();
       p5.background('#121212');
       p5.fill('white')
-
-      // let inputX = p5.width / 2 - numCirclesInputSize / 2;
-      // let inputY =  p5.height / 2 + 100;
-      // let inputHeight = numCirclesInput.size.height;
-      // let inputWidth = numCirclesInput.size.width;
-      // let midpointX = inputX + inputWidth + 30;
-      // let midpointY = inputY + (inputHeight / 2)
-      // p5.triangle(midpointX, inputHeight, midpointX + 10, midpointY, midpointX - 10, midpointY);
-      // p5.triangle(inputX + 120, inputY + 40, inputX + 130, inputY + 20, inputX + 110, inputY + 20);
-      populateCircleArrays();
       
-
+      
+      drawWhiteCircle();
+      populateCircleArrays();
       
     }
     p5.windowResized = () => {
       p5.resizeCanvas(p5.windowWidth, p5.windowHeight);
 
       setNumCirclesInputStyle();
+      setNumCirclesSliderStyle();
       setTempoInputStyle();
-      p5.redraw();
+      // p5.redraw();
     }
 
     p5.mousePressed = () => {
@@ -97,6 +125,23 @@
       }
     }
 
+    const drawWhiteCircle = (): void => {
+      if (numCircles != 0) { 
+        p5.fill(p5.color("#EEE"));
+        let x = (p5.width / (numCircles + 1)) * (currBeat+1)
+        console.log(currBeat)
+        let y = p5.height / 2
+        
+        if (numCircles > 25) {
+          diameter = 55
+        } else {
+          diameter = 70
+        }
+        p5.circle(x, y, diameter)
+      }
+      // p5.redraw()
+      
+    }
     const setNumCirclesInputStyle = (): void => {
       numCirclesInput.style('background-color', "#121212")
       numCirclesInput.style( 'color', "#EEE")
@@ -108,6 +153,14 @@
       numCirclesInput.size(numCirclesInputSize)
       numCirclesInput.id('numCirclesInput');
       numCirclesInput.class('font-open-sans');
+      
+    }
+    const setNumCirclesSliderStyle = ():void => {
+      numCirclesSlider.style('width', `${numCirclesInput.width}px`);
+      numCirclesSlider.style('::-webkit-slider-thumb')
+
+      numCirclesSlider.position((p5.width / 2 - numCirclesInputSize / 2) , p5.height / 2 + 100 + 50);
+      numCirclesSlider.id('numCircleSlider')
       
     }
     const setTempoInputStyle = (): void => {
@@ -123,6 +176,7 @@
       tempoInput.class('font-open-sans');
       
     }
+
 
     const calculateCircleClicked = (): number => {
       const r: number = diameter / 2;
@@ -163,10 +217,11 @@
       circleColors.push(CircleColors.teal);
       }
       numCircles = circleColors.length;
+      subdivisionsStore.set(numCircles)
       console.log(numCircles)
       console.log(circleColors)
       circleColorStore.set(circleColors)
-      p5.redraw();
+      // p5.redraw();
     }
 
     const updateCircleColorsLen = () => {
@@ -181,12 +236,13 @@
         } 
       }
       numCircles = circleColors.length;
+      subdivisionsStore.set(numCircles)
       console.log(numCircles)
       console.log(circleColors)
       circleColorStore.set(circleColors)
       
       
-      p5.redraw();
+      // p5.redraw();
     }
     const updateTempo = () => {
       tempo = Number(tempoInput.value());
@@ -201,11 +257,10 @@
         } else {
           circleColors[i] = CircleColors.purple
         }
-        p5.redraw();
+        // p5.redraw();
     }
   };
 </script>
-
 
 
 <P5 {sketch} />
