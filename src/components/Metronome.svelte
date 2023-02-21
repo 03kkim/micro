@@ -37,43 +37,6 @@
       decay: 0.2,
       sustain: 0.5,
       release: 0.1,}}).toDestination();
-  
-      // var tom = new Tone.MembraneSynth();
-      // var snare = new Tone.NoiseSynth(   
-      // { noise: {
-      //     type: "brown"
-      //   },
-      //   envelope: {
-      //     attack: 0.005 ,
-      //     decay: 0.1 ,
-      //     sustain: 0.02
-      //     }
-      //   }
-      // )
-      // var reverb = new Tone.Freeverb({
-      // roomSize  : 0.7 ,
-      // dampening  : 8000
-      // });
-      // var feedbackDelay = new Tone.FeedbackDelay({
-      // delayTime  : "32n",
-      //   feedback : 0.25
-      // });
-      // var gate = new Tone.Gate(-50)
-      // var compressor = new Tone.MidSideCompressor();
-      // var gain = new Tone.Gain();
-
-      // // snare.chain(reverb, gate, compressor, gain);
-      // snare.chain( gate, compressor, gain);
-
-      // //tom.chain(reverb, gate, compressor, gain);
-      // tom.chain( gate, compressor, gain);
-
-
-      // gain.chain(Tone.Master); // dry
-
-      // snare.triggerAttackRelease("C4, 8n");
-      // tom.triggerAttackRelease("C1","8n");
-
 
   let idx = 0;
   currBeatStore.subscribe(data => {
