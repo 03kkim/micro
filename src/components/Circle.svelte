@@ -4,20 +4,11 @@
 
   import { circleColorStore, currBeatStore, subdivisionsStore, tempoStore } from "../stores/stores"
 
-  let currBeat: number;
-  currBeatStore.subscribe((data) => {
-    currBeat = data;
-  })
   let diameter: number = 55;
 
   let numCirclesInput;
   let numCirclesInputSize: number;
-  let numCircles: number;
-  subdivisionsStore.subscribe(data => {
-    numCircles = data;
-  })
-  let prevNumCircles: number = numCircles;
-
+  
   let tempoInput;
   let tempoInputSize;
 
@@ -32,6 +23,17 @@
   tempoStore.subscribe(data => {
     tempo = data;
   })
+  
+  let currBeat: number;
+  currBeatStore.subscribe((data) => {
+    currBeat = data;
+  })
+
+  let numCircles: number;
+  subdivisionsStore.subscribe(data => {
+    numCircles = data;
+  })
+  let prevNumCircles: number = numCircles;
 
   let canvas;
 
@@ -62,24 +64,22 @@
       tempoInput.changed(updateTempo)
 
       numCirclesSlider = p5.createSlider(0, 32, 1);
-      numCirclesSlider.position(10, 10);
-      numCirclesSlider.style('width', '200px');
-      numCirclesSlider.id('numCircleSlider')
+      setNumCirclesSliderStyle();
 
-      const bruh = () => {
+      const setNumCirclesInput = () => {
         numCirclesInput.value(numCirclesSlider.value())
       }
-      numCirclesSlider.input(bruh)
+      numCirclesSlider.input(setNumCirclesInput)
 
       circleColorStore.set(circleColors)
       console.log(circleColors)
 
       
 
-      const bruh2 = () => {
+      const setNumCirclesSlider = () => {
         numCirclesSlider.value(numCirclesInput.value())
       }
-      numCirclesInput.input(bruh2)
+      numCirclesInput.input(setNumCirclesSlider)
       // p5.noLoop()
       
     };
@@ -94,12 +94,9 @@
 
         
         if (!isNumCirclesInputFocused) {
-          console.log("bruh")
+          // console.log("bruh")
           numCirclesSlider.value(numCirclesInput.value());
         }
-        
-      
-  
       
       subdivisionsStore.set(numCircles)
       updateCircleColorsLen();
@@ -111,13 +108,12 @@
       drawWhiteCircle();
       populateCircleArrays();
       
-
-      
     }
     p5.windowResized = () => {
       p5.resizeCanvas(p5.windowWidth, p5.windowHeight);
 
       setNumCirclesInputStyle();
+      setNumCirclesSliderStyle();
       setTempoInputStyle();
       // p5.redraw();
     }
@@ -159,6 +155,11 @@
       numCirclesInput.class('font-open-sans');
       
     }
+    const setNumCirclesSliderStyle = ():void => {
+      numCirclesSlider.style('width', `${numCirclesInput.width}px`);
+      numCirclesSlider.position((p5.width / 2 - numCirclesInputSize / 2) , p5.height / 2 + 100 + 50);
+      numCirclesSlider.id('numCircleSlider')
+    }
     const setTempoInputStyle = (): void => {
       tempoInput.style('background-color', "#121212")
       tempoInput.style( 'color', "#EEE")
@@ -172,6 +173,7 @@
       tempoInput.class('font-open-sans');
       
     }
+
 
     const calculateCircleClicked = (): number => {
       const r: number = diameter / 2;
