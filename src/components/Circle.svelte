@@ -157,7 +157,7 @@
     }
     const setNumCirclesSliderStyle = ():void => {
       numCirclesSlider.style('width', `${numCirclesInput.width}px`);
-      numCirclesSlider.style('::-webkit-slider-thumb')
+      // numCirclesSlider.style('::-webkit-slider-thumb');
 
       numCirclesSlider.position((p5.width / 2 - numCirclesInputSize / 2) , p5.height / 2 + 100 + 50);
       numCirclesSlider.id('numCircleSlider')
