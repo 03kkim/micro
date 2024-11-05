@@ -1,7 +1,7 @@
-# Complex-V1
+# micro
 
 ## What is this app?
-Complex V1 is a simple, intuitive complex meter metronome.
+micro is a simple, intuitive complex meter metronome.
 
 ## To Use
 - Spacebar to play / stop the metronome
