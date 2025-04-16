@@ -2,12 +2,7 @@
   import P5, { type Sketch, type p5 } from "p5-svelte";
   import Metronome from "./Metronome.svelte";
 
-  import {
-    circleColorStore,
-    currBeatStore,
-    subdivisionsStore,
-    tempoStore,
-  } from "../stores/stores";
+  import { circleColorStore, currBeatStore, subdivisionsStore, tempoStore } from "../stores/stores";
 
   let diameter: number = 55;
 
@@ -43,8 +38,9 @@
   let canvas;
 
   enum CircleColors {
-    teal,
+    gray,
     purple,
+    teal,
   }
 
   let numCirclesSlider;
@@ -58,18 +54,16 @@
       canvas.position(0, 0);
       canvas.style("z-index", "-1");
 
-      numCirclesInput = p5
-        .createInput("16")
-        .attribute("placeholder", "Subdivisions");
+      numCirclesInput = p5.createInput("5").attribute("placeholder", "Subdivisions");
       setNumCirclesInputStyle();
       numCirclesInput.changed(updateCircleColorsLen);
       initCircleColors();
 
-      tempoInput = p5.createInput("30").attribute("placeholder", "BPM");
+      tempoInput = p5.createInput("120").attribute("placeholder", "BPM");
       setTempoInputStyle();
       tempoInput.changed(updateTempo);
 
-      numCirclesSlider = p5.createSlider(0, 32, 1);
+      numCirclesSlider = p5.createSlider(1, 17, 1);
       setNumCirclesSliderStyle();
 
       const setNumCirclesInput = () => {
@@ -92,8 +86,7 @@
 
       // numCircles = Number(numCirclesInput.value());
       var numCirclesInputElem = document.getElementById("numCirclesInput");
-      var isNumCirclesInputFocused =
-        document.activeElement === numCirclesInputElem;
+      var isNumCirclesInputFocused = document.activeElement === numCirclesInputElem;
       numCircles = numCirclesSlider.value();
 
       if (!isNumCirclesInputFocused) {
@@ -122,7 +115,7 @@
     p5.mousePressed = () => {
       let circleClicked = calculateCircleClicked();
       if (circleClicked != -1) {
-        invertCircleColor(circleClicked);
+        rotateCircleColor(circleClicked);
       }
     };
 
@@ -149,10 +142,7 @@
       numCirclesInput.style("border-width", "1px");
       numCirclesInput.style("padding", "5px");
       numCirclesInputSize = 100;
-      numCirclesInput.position(
-        p5.width / 2 - numCirclesInputSize / 2,
-        p5.height / 2 + 100
-      );
+      numCirclesInput.position(p5.width / 2 - numCirclesInputSize / 2, p5.height / 2 + 100);
       numCirclesInput.size(numCirclesInputSize);
       numCirclesInput.id("numCirclesInput");
       numCirclesInput.class("font-open-sans");
@@ -161,10 +151,7 @@
       numCirclesSlider.style("width", `${numCirclesInput.width}px`);
       // numCirclesSlider.style('::-webkit-slider-thumb');
 
-      numCirclesSlider.position(
-        p5.width / 2 - numCirclesInputSize / 2,
-        p5.height / 2 + 100 + 50
-      );
+      numCirclesSlider.position(p5.width / 2 - numCirclesInputSize / 2, p5.height / 2 + 100 + 50);
       numCirclesSlider.id("numCircleSlider");
     };
     const setTempoInputStyle = (): void => {
@@ -174,10 +161,7 @@
       tempoInput.style("border-width", "1px");
       tempoInput.style("padding", "5px");
       tempoInputSize = 100;
-      tempoInput.position(
-        p5.width / 2 - numCirclesInputSize / 2,
-        p5.height / 2 + 200
-      );
+      tempoInput.position(p5.width / 2 - numCirclesInputSize / 2, p5.height / 2 + 200);
       tempoInput.size(numCirclesInputSize);
       tempoInput.id("tempoInput");
       tempoInput.class("font-open-sans");
@@ -190,8 +174,7 @@
 
       for (let i = 0; i < numCircles; i++) {
         let leftHand: number =
-          Math.pow(x - (p5.width / (numCircles + 1)) * (i + 1), 2) +
-          Math.pow(y - p5.height / 2, 2);
+          Math.pow(x - (p5.width / (numCircles + 1)) * (i + 1), 2) + Math.pow(y - p5.height / 2, 2);
         let rightHand: number = Math.pow(r, 2);
         if (leftHand < rightHand) {
           return i;
@@ -202,11 +185,17 @@
     const populateCircleArrays = () => {
       circles = [];
       for (let i = 0; i < numCircles; i++) {
-        const c =
-          circleColors[i] == CircleColors.purple
-            ? p5.color("#BB86FC")
-            : p5.color("#03DAC6");
-        p5.fill(c);
+        if (circleColors[i] == CircleColors.purple) {
+          // p5.strokeWeight(2);
+          p5.fill(p5.color("#BB86FC"));
+        } else if (circleColors[i] == CircleColors.teal) {
+          // p5.strokeWeight(1);
+          p5.fill(p5.color("#03DAC6"));
+        } else if (circleColors[i] == CircleColors.gray) {
+          // p5.strokeWeight(0);
+          p5.fill(p5.color("gray"));
+        }
+
         let x = (p5.width / (numCircles + 1)) * (i + 1);
         let y = p5.height / 2;
         // console.log(`x: ${x}`)
@@ -224,25 +213,25 @@
     const initCircleColors = () => {
       circleColors = [];
       for (let i = 0; i < numCircles; i++) {
-        circleColors.push(CircleColors.teal);
+        circleColors.push(CircleColors.gray);
       }
+
+      circleColors[0] = CircleColors.purple; // first circle is purple
       numCircles = circleColors.length;
       subdivisionsStore.set(numCircles);
       console.log(numCircles);
       console.log(circleColors);
       circleColorStore.set(circleColors);
-      // p5.redraw();
     };
 
     const updateCircleColorsLen = () => {
-      // console.log(prevNumCircles)
       if (prevNumCircles > numCircles) {
         for (let i = 0; i < prevNumCircles - numCircles; i++) {
           circleColors.pop();
         }
       } else if (prevNumCircles < numCircles) {
         for (let i = 0; i < numCircles - prevNumCircles; i++) {
-          circleColors.push(CircleColors.teal);
+          circleColors.push(CircleColors.gray);
         }
       }
       numCircles = circleColors.length;
@@ -260,10 +249,12 @@
       p5.redraw;
     };
 
-    const invertCircleColor = (i: number) => {
+    const rotateCircleColor = (i: number) => {
       if (circleColors[i] === CircleColors.purple) {
         circleColors[i] = CircleColors.teal;
-      } else {
+      } else if (circleColors[i] === CircleColors.teal) {
+        circleColors[i] = CircleColors.gray;
+      } else if (circleColors[i] === CircleColors.gray) {
         circleColors[i] = CircleColors.purple;
       }
       // p5.redraw();

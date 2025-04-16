@@ -1,19 +1,63 @@
 <script lang="ts">
   import * as Tone from "tone";
-  import {
-    circleColorStore,
-    currBeatStore,
-    subdivisionsStore,
-    tempoStore,
-  } from "../stores/stores";
+  import { circleColorStore, currBeatStore, subdivisionsStore, tempoStore } from "../stores/stores";
 
+  let tempo: number;
   let numCircles: number;
-  subdivisionsStore.subscribe((data) => {
-    numCircles = data;
+  let idx = 0;
+
+  let pendingTempo: number | null = null;
+  let pendingNumCircles: number | null = null;
+
+  const updateTransportBpm = () => {
+    if (tempo && numCircles) {
+      Tone.Transport.bpm.value = tempo * numCircles;
+    }
+  };
+
+  currBeatStore.subscribe((data) => {
+    idx = data;
+    // Check if the current cycle is complete
+    if (idx === 0 && (pendingTempo !== null || pendingNumCircles !== null)) {
+      // Apply pending updates
+      if (pendingTempo !== null) {
+        tempo = pendingTempo;
+        pendingTempo = null;
+      }
+      if (pendingNumCircles !== null) {
+        numCircles = pendingNumCircles;
+        pendingNumCircles = null;
+      }
+      updateTransportBpm();
+    }
   });
+
+  tempoStore.subscribe((data) => {
+    if (idx === 0) {
+      // Update immediately if at the start of a cycle
+      tempo = data;
+      updateTransportBpm();
+    } else {
+      // Otherwise, queue the update
+      pendingTempo = data;
+    }
+  });
+
+  subdivisionsStore.subscribe((data) => {
+    if (idx === 0) {
+      // Update immediately if at the start of a cycle
+      numCircles = data;
+      updateTransportBpm();
+    } else {
+      // Otherwise, queue the update
+      pendingNumCircles = data;
+    }
+  });
+
   enum CircleColors {
-    teal,
+    gray,
     purple,
+    teal,
   }
 
   let circleColors: CircleColors[];
@@ -21,47 +65,39 @@
     circleColors = data;
   });
 
-  let tempo: number;
-  tempoStore.subscribe((data) => {
-    tempo = data;
-  });
-
   let stopped = true;
   // let numCircles: number = 2;
 
-  const kickSynth: Tone.Synth<Tone.MembraneSynth> = new Tone.MembraneSynth({
+  const kickSynth: Tone.MembraneSynth = new Tone.MembraneSynth({
     envelope: {
       attack: 0.1,
       decay: 0.2,
       sustain: 0.5,
-      release: 0.5,
+      release: 0.2,
     },
   }).toDestination();
 
-  const hatSynth: Tone.Synth<Tone.MetalSynth> = new Tone.MetalSynth({
+  const hatSynth: Tone.MetalSynth = new Tone.MetalSynth({
     envelope: {
       attack: 0.1,
-      decay: 0.2,
-      sustain: 0.5,
-      release: 0.1,
+      decay: 0.15,
+      sustain: 0.0,
+      release: 0.02,
     },
   }).toDestination();
-
-  let idx = 0;
-  currBeatStore.subscribe((data) => {
-    idx = data;
-  });
 
   const loop: Tone.Loop<Tone.LoopOptions> = new Tone.Loop((time) => {
     if (stopped === true) {
       idx = 0;
       stopped = false;
     }
-    idx = idx % circleColors.length;
+    idx = idx % numCircles;
     if (circleColors[idx] == CircleColors.purple) {
       kickSynth.triggerAttackRelease("C2", "64n", time);
     } else if (circleColors[idx] == CircleColors.teal) {
       hatSynth.triggerAttackRelease("C2", "64n", time);
+    } else if (circleColors[idx] == CircleColors.gray) {
+      // do nothing
     }
 
     currBeatStore.set(idx);
@@ -86,15 +122,10 @@
   document.addEventListener("keyup", (event) => {
     // https://stackoverflow.com/questions/36430561/how-can-i-check-if-my-element-id-has-focus
     var numCirclesInputElem = document.getElementById("numCirclesInput");
-    var isNumCirclesInputFocused =
-      document.activeElement === numCirclesInputElem;
+    var isNumCirclesInputFocused = document.activeElement === numCirclesInputElem;
     var tempoInputElem = document.getElementById("tempoInput");
     var isTempoInputFocused = document.activeElement === tempoInputElem;
-    // numCirclesInputElem.addEventListener("change",(ev) => {
-    //   Tone.Transport.bpm.value = tempo * numCircles;
-    //   Tone.Transport.bpm.rampTo(tempo * numCircles, 1);
-    // }
-    // )
+
     if (!isNumCirclesInputFocused && !isTempoInputFocused) {
       if (event.code === "Space") {
         if (stopped == true) {
