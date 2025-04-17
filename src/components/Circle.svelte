@@ -44,6 +44,7 @@
   }
 
   let numCirclesSlider;
+  let tempoSlider;
 
   let usingInput = false;
 
@@ -57,43 +58,66 @@
       numCirclesInput = p5.createInput("5").attribute("placeholder", "Subdivisions");
       setNumCirclesInputStyle();
       numCirclesInput.changed(updateCircleColorsLen);
-      initCircleColors();
 
-      tempoInput = p5.createInput("120").attribute("placeholder", "BPM");
-      setTempoInputStyle();
-      tempoInput.changed(updateTempo);
-
+      // numCircles stuff
       numCirclesSlider = p5.createSlider(1, 17, 1);
       setNumCirclesSliderStyle();
 
       const setNumCirclesInput = () => {
         numCirclesInput.value(numCirclesSlider.value());
       };
-      numCirclesSlider.input(setNumCirclesInput);
-
-      circleColorStore.set(circleColors);
-      console.log(circleColors);
 
       const setNumCirclesSlider = () => {
         numCirclesSlider.value(numCirclesInput.value());
       };
+
+      numCirclesSlider.input(setNumCirclesInput);
       numCirclesInput.input(setNumCirclesSlider);
+
+      // tempoInput stuff
+      tempoInput = p5.createInput("120").attribute("placeholder", "BPM");
+      setTempoInputStyle();
+      // tempoInput.changed(updateTempo);
+      tempoSlider = p5.createSlider(30, 300, 1);
+
+      setTempoSliderStyle();
+
+      const setTempoInput = () => {
+        tempoInput.value(tempoSlider.value());
+      };
+
+      const setTempoSlider = () => {
+        tempoSlider.value(tempoInput.value());
+      };
+
+      tempoSlider.input(setTempoInput);
+      tempoInput.input(setTempoSlider);
+
+      initCircleColors();
+      circleColorStore.set(circleColors);
+      console.log(circleColors);
       // p5.noLoop()
     };
 
     p5.draw = () => {
       prevNumCircles = numCircles;
 
-      // numCircles = Number(numCirclesInput.value());
       var numCirclesInputElem = document.getElementById("numCirclesInput");
+      var tempoInputElem = document.getElementById("tempoInput");
       var isNumCirclesInputFocused = document.activeElement === numCirclesInputElem;
-      numCircles = numCirclesSlider.value();
+      var isTempoInputFocused = document.activeElement === tempoInputElem;
 
       if (!isNumCirclesInputFocused) {
         // console.log("bruh")
         numCirclesSlider.value(numCirclesInput.value());
       }
 
+      if (!isTempoInputFocused) {
+        // console.log("bruh")
+        tempoSlider.value(tempoInput.value());
+      }
+
+      numCircles = numCirclesSlider.value();
       subdivisionsStore.set(numCircles);
       updateCircleColorsLen();
       updateTempo();
@@ -108,6 +132,7 @@
 
       setNumCirclesInputStyle();
       setNumCirclesSliderStyle();
+      setTempoSliderStyle();
       setTempoInputStyle();
       // p5.redraw();
     };
@@ -154,6 +179,14 @@
       numCirclesSlider.position(p5.width / 2 - numCirclesInputSize / 2, p5.height / 2 + 100 + 50);
       numCirclesSlider.id("numCircleSlider");
     };
+
+    const setTempoSliderStyle = (): void => {
+      tempoSlider.style("width", `${tempoInput.width}px`);
+      // numCirclesSlider.style('::-webkit-slider-thumb');
+
+      tempoSlider.position(p5.width / 2 - tempoInputSize / 2, p5.height / 2 + 200 + 50);
+      tempoSlider.id("tempoSlider");
+    };
     const setTempoInputStyle = (): void => {
       tempoInput.style("background-color", "#121212");
       tempoInput.style("color", "#EEE");
@@ -186,20 +219,15 @@
       circles = [];
       for (let i = 0; i < numCircles; i++) {
         if (circleColors[i] == CircleColors.purple) {
-          // p5.strokeWeight(2);
           p5.fill(p5.color("#BB86FC"));
         } else if (circleColors[i] == CircleColors.teal) {
-          // p5.strokeWeight(1);
           p5.fill(p5.color("#03DAC6"));
         } else if (circleColors[i] == CircleColors.gray) {
-          // p5.strokeWeight(0);
           p5.fill(p5.color("gray"));
         }
 
         let x = (p5.width / (numCircles + 1)) * (i + 1);
         let y = p5.height / 2;
-        // console.log(`x: ${x}`)
-        // console.log(`y: ${y}`)
 
         if (numCircles > 25) {
           diameter = 40;

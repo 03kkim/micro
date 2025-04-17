@@ -95,6 +95,7 @@
     if (circleColors[idx] == CircleColors.purple) {
       kickSynth.triggerAttackRelease("C2", "64n", time);
     } else if (circleColors[idx] == CircleColors.teal) {
+      hatSynth.volume.value = -6; // in dB
       hatSynth.triggerAttackRelease("C2", "64n", time);
     } else if (circleColors[idx] == CircleColors.gray) {
       // do nothing
